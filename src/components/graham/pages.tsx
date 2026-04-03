@@ -1,12 +1,7 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
 
-const SERVERS = [
-  { name: "Команда разработки", members: 24, online: 8, color: "hsl(168 100% 50%)", tag: "DEV" },
-  { name: "Дизайн и UI/UX", members: 12, online: 5, color: "hsl(270 80% 65%)", tag: "ART" },
-  { name: "Маркетинг", members: 18, online: 3, color: "hsl(210 100% 60%)", tag: "MKT" },
-  { name: "Общий чат", members: 156, online: 42, color: "hsl(45 100% 55%)", tag: "GEN" },
-];
+const SERVERS: { name: string; members: number; online: number; color: string; tag: string }[] = [];
 
 const STATS = [
   { label: "Участников", value: "2,847", icon: "Users", color: "hsl(168 100% 50%)" },
@@ -91,24 +86,11 @@ export function HomePage() {
           <div className="w-2 h-2 rounded-full bg-neon-green animate-pulse" />
           Активность в сети
         </h2>
-        <div className="space-y-3">
-          {[
-            { user: "Алексей К.", action: "вошёл в сервер Команда разработки", time: "2 мин назад", icon: "LogIn" },
-            { user: "Мария П.", action: "отправила зашифрованное сообщение", time: "5 мин назад", icon: "Lock" },
-            { user: "Новый сервер", action: "«Аналитика Q2» создан с E2E защитой", time: "12 мин назад", icon: "Shield" },
-            { user: "Иван М.", action: "обновил настройки приватности", time: "28 мин назад", icon: "Settings" },
-          ].map((item, i) => (
-            <div key={i} className="flex items-center gap-3 text-sm animate-fade-in" style={{ animationDelay: `${0.3 + i * 0.05}s`, opacity: 0 }}>
-              <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                <Icon name={item.icon} size={13} className="text-muted-foreground" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="font-semibold text-foreground">{item.user}</span>
-                <span className="text-muted-foreground"> {item.action}</span>
-              </div>
-              <span className="font-mono text-xs text-muted-foreground flex-shrink-0">{item.time}</span>
-            </div>
-          ))}
+        <div className="flex flex-col items-center justify-center py-6 text-center">
+          <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-3">
+            <Icon name="Activity" size={18} className="text-muted-foreground" />
+          </div>
+          <p className="text-sm text-muted-foreground">Активность появится, когда вы начнёте общаться</p>
         </div>
       </div>
     </div>
@@ -129,49 +111,61 @@ export function ServersPage() {
         </button>
       </div>
 
-      <div className="grid gap-4">
-        {SERVERS.map((server, i) => (
-          <div
-            key={server.name}
-            className="group glass rounded-xl p-5 border border-border transition-all cursor-pointer animate-fade-in hover:scale-[1.01]"
-            style={{ animationDelay: `${i * 0.08}s`, opacity: 0 }}
-          >
-            <div className="flex items-center gap-4">
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center font-mono font-bold text-sm flex-shrink-0"
-                style={{ backgroundColor: `${server.color}20`, color: server.color, border: `1px solid ${server.color}40` }}
-              >
-                {server.tag}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold">{server.name}</h3>
-                  <span className="w-1.5 h-1.5 rounded-full bg-neon-green" />
-                  <span className="text-xs text-neon-green font-mono">{server.online} online</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">{server.members} участников</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                  <Icon name="Lock" size={11} />
-                  E2E
-                </div>
-                <Icon name="ChevronRight" size={16} className="text-muted-foreground group-hover:text-foreground transition-colors" />
-              </div>
-            </div>
-            <div className="mt-4 h-1 rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{
-                  width: `${(server.online / server.members) * 100}%`,
-                  backgroundColor: server.color,
-                  boxShadow: `0 0 8px ${server.color}`
-                }}
-              />
-            </div>
+      {SERVERS.length === 0 ? (
+        <div className="glass rounded-2xl border border-border p-10 flex flex-col items-center justify-center text-center">
+          <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
+            <Icon name="Server" size={24} className="text-muted-foreground" />
           </div>
-        ))}
-      </div>
+          <h3 className="font-bold text-base mb-1">Нет серверов</h3>
+          <p className="text-sm text-muted-foreground max-w-xs">
+            Создайте первый сервер, чтобы общаться с командой в защищённом пространстве
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {SERVERS.map((server, i) => (
+            <div
+              key={server.name}
+              className="group glass rounded-xl p-5 border border-border transition-all cursor-pointer animate-fade-in hover:scale-[1.01]"
+              style={{ animationDelay: `${i * 0.08}s`, opacity: 0 }}
+            >
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center font-mono font-bold text-sm flex-shrink-0"
+                  style={{ backgroundColor: `${server.color}20`, color: server.color, border: `1px solid ${server.color}40` }}
+                >
+                  {server.tag}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold">{server.name}</h3>
+                    <span className="w-1.5 h-1.5 rounded-full bg-neon-green" />
+                    <span className="text-xs text-neon-green font-mono">{server.online} online</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{server.members} участников</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                    <Icon name="Lock" size={11} />
+                    E2E
+                  </div>
+                  <Icon name="ChevronRight" size={16} className="text-muted-foreground group-hover:text-foreground transition-colors" />
+                </div>
+              </div>
+              <div className="mt-4 h-1 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${(server.online / server.members) * 100}%`,
+                    backgroundColor: server.color,
+                    boxShadow: `0 0 8px ${server.color}`
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

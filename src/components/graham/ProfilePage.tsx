@@ -39,9 +39,9 @@ export function ProfilePage() {
 
         <div className="mt-5 pt-5 border-t border-border grid grid-cols-3 gap-4 text-center">
           {[
-            { label: "Серверов", value: "7" },
-            { label: "Друзей", value: "43" },
-            { label: "Сообщений", value: "1.2K" },
+            { label: "Серверов", value: "0" },
+            { label: "Друзей", value: "0" },
+            { label: "Сообщений", value: "0" },
           ].map((s) => (
             <div key={s.label}>
               <div className="text-xl font-black neon-text">{s.value}</div>

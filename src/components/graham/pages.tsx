@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
 
-const SERVERS: { name: string; members: number; online: number; color: string; tag: string }[] = [];
+type Page = "home" | "servers" | "chats" | "profile" | "settings" | "help";
 
 const STATS = [
   { label: "Участников", value: "2,847", icon: "Users", color: "hsl(168 100% 50%)" },
@@ -19,13 +19,23 @@ const PRIVACY_OPTIONS = [
 ];
 
 const FAQ = [
-  { q: "Как создать приватный чат?", a: "В разделе Чаты нажмите «+» и выберите «Приватный». Сообщения будут зашифрованы сквозным шифрованием." },
+  { q: "Как создать приватный чат?", a: "В разделе Чаты нажмите «Добавить» и введите имя контакта. Сообщения будут зашифрованы сквозным шифрованием." },
   { q: "Насколько защищены мои данные?", a: "Graham использует E2E-шифрование для всех сообщений. Ваши данные не передаются третьим лицам." },
   { q: "Как включить двухфакторную аутентификацию?", a: "Перейдите в Настройки → Безопасность и активируйте 2FA через приложение-аутентификатор." },
   { q: "Можно ли удалить свои данные?", a: "Да. В разделе Настройки → Данные вы можете запросить полное удаление аккаунта и всех связанных данных." },
 ];
 
-export function HomePage() {
+type Server = { id: number; name: string; tag: string; color: string; members: number; online: number };
+
+const SERVER_COLORS = [
+  "hsl(168 100% 50%)",
+  "hsl(270 80% 65%)",
+  "hsl(210 100% 60%)",
+  "hsl(45 100% 55%)",
+  "hsl(340 80% 60%)",
+];
+
+export function HomePage({ navigate }: { navigate: (p: Page) => void }) {
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="relative overflow-hidden rounded-2xl border border-neon-green/20 bg-card p-8">
@@ -45,13 +55,19 @@ export function HomePage() {
             Защищённая платформа для общения с E2E-шифрованием, приватными чатами и полным контролем над данными.
           </p>
           <div className="flex gap-3 mt-6">
-            <button className="flex items-center gap-2 bg-neon-green text-background font-bold px-5 py-2.5 rounded-lg hover:opacity-90 transition-all hover:scale-105 text-sm">
+            <button
+              onClick={() => navigate("chats")}
+              className="flex items-center gap-2 bg-neon-green text-background font-bold px-5 py-2.5 rounded-lg hover:opacity-90 transition-all hover:scale-105 text-sm"
+            >
               <Icon name="MessageSquare" size={16} />
               Начать общение
             </button>
-            <button className="flex items-center gap-2 border border-border text-foreground px-5 py-2.5 rounded-lg hover:border-neon-green/50 transition-all text-sm">
+            <button
+              onClick={() => navigate("servers")}
+              className="flex items-center gap-2 border border-border text-foreground px-5 py-2.5 rounded-lg hover:border-neon-green/50 transition-all text-sm"
+            >
               <Icon name="Server" size={16} />
-              Найти сервер
+              Серверы
             </button>
           </div>
         </div>
@@ -91,6 +107,12 @@ export function HomePage() {
             <Icon name="Activity" size={18} className="text-muted-foreground" />
           </div>
           <p className="text-sm text-muted-foreground">Активность появится, когда вы начнёте общаться</p>
+          <button
+            onClick={() => navigate("chats")}
+            className="mt-3 text-xs text-neon-green hover:underline"
+          >
+            Перейти к чатам →
+          </button>
         </div>
       </div>
     </div>
@@ -98,34 +120,104 @@ export function HomePage() {
 }
 
 export function ServersPage() {
+  const [servers, setServers] = useState<Server[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [newName, setNewName] = useState("");
+
+  const createServer = () => {
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    const tag = trimmed.slice(0, 3).toUpperCase();
+    const color = SERVER_COLORS[servers.length % SERVER_COLORS.length];
+    setServers((prev) => [
+      ...prev,
+      { id: Date.now(), name: trimmed, tag, color, members: 1, online: 1 },
+    ]);
+    setNewName("");
+    setShowModal(false);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-sm mx-4 glass rounded-2xl border border-border p-6"
+               style={{ boxShadow: "0 0 40px hsl(168 100% 50% / 0.1)" }}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-black">Создать сервер</h2>
+              <button onClick={() => setShowModal(false)}
+                className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
+                <Icon name="X" size={16} className="text-muted-foreground" />
+              </button>
+            </div>
+            <div className="mb-5">
+              <label className="text-xs text-muted-foreground mb-1.5 block">Название сервера</label>
+              <div className="flex items-center gap-2 bg-muted border border-border rounded-lg px-3 py-2 focus-within:border-neon-green/50 transition-colors">
+                <Icon name="Server" size={14} className="text-muted-foreground flex-shrink-0" />
+                <input
+                  autoFocus
+                  placeholder="Например: Команда проекта"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && createServer()}
+                  className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setShowModal(false)}
+                className="flex-1 border border-border text-sm py-2.5 rounded-lg hover:border-neon-green/30 transition-colors">
+                Отмена
+              </button>
+              <button
+                onClick={createServer}
+                disabled={!newName.trim()}
+                className="flex-1 bg-neon-green text-background font-bold text-sm py-2.5 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <Icon name="Plus" size={15} />
+                Создать
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black">Серверы</h1>
           <p className="text-muted-foreground text-sm mt-1">Ваши защищённые пространства для общения</p>
         </div>
-        <button className="flex items-center gap-2 bg-neon-green text-background font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-all text-sm hover:scale-105">
+        <button
+          onClick={() => setShowModal(true)}
+          className="flex items-center gap-2 bg-neon-green text-background font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-all text-sm hover:scale-105"
+        >
           <Icon name="Plus" size={15} />
           Создать сервер
         </button>
       </div>
 
-      {SERVERS.length === 0 ? (
+      {servers.length === 0 ? (
         <div className="glass rounded-2xl border border-border p-10 flex flex-col items-center justify-center text-center">
           <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
             <Icon name="Server" size={24} className="text-muted-foreground" />
           </div>
           <h3 className="font-bold text-base mb-1">Нет серверов</h3>
-          <p className="text-sm text-muted-foreground max-w-xs">
+          <p className="text-sm text-muted-foreground max-w-xs mb-4">
             Создайте первый сервер, чтобы общаться с командой в защищённом пространстве
           </p>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 bg-neon-green text-background font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-all text-sm hover:scale-105"
+          >
+            <Icon name="Plus" size={15} />
+            Создать первый сервер
+          </button>
         </div>
       ) : (
         <div className="grid gap-4">
-          {SERVERS.map((server, i) => (
+          {servers.map((server, i) => (
             <div
-              key={server.name}
+              key={server.id}
               className="group glass rounded-xl p-5 border border-border transition-all cursor-pointer animate-fade-in hover:scale-[1.01]"
               style={{ animationDelay: `${i * 0.08}s`, opacity: 0 }}
             >
@@ -149,17 +241,19 @@ export function ServersPage() {
                     <Icon name="Lock" size={11} />
                     E2E
                   </div>
-                  <Icon name="ChevronRight" size={16} className="text-muted-foreground group-hover:text-foreground transition-colors" />
+                  <button
+                    onClick={() => setServers((prev) => prev.filter((s) => s.id !== server.id))}
+                    className="w-7 h-7 rounded-lg hover:bg-red-500/10 flex items-center justify-center transition-colors"
+                    title="Удалить сервер"
+                  >
+                    <Icon name="Trash2" size={13} className="text-muted-foreground hover:text-red-400" />
+                  </button>
                 </div>
               </div>
               <div className="mt-4 h-1 rounded-full bg-muted overflow-hidden">
                 <div
-                  className="h-full rounded-full transition-all"
-                  style={{
-                    width: `${(server.online / server.members) * 100}%`,
-                    backgroundColor: server.color,
-                    boxShadow: `0 0 8px ${server.color}`
-                  }}
+                  className="h-full rounded-full"
+                  style={{ width: "100%", backgroundColor: server.color, boxShadow: `0 0 8px ${server.color}` }}
                 />
               </div>
             </div>
@@ -172,11 +266,18 @@ export function ServersPage() {
 
 export function SettingsPage() {
   const [privacyOptions, setPrivacyOptions] = useState(PRIVACY_OPTIONS);
+  const [notifOptions, setNotifOptions] = useState([
+    { id: "sound", label: "Звук сообщений", desc: "Воспроизводить звук при получении", enabled: true },
+    { id: "push", label: "Push-уведомления", desc: "Уведомления в браузере", enabled: true },
+    { id: "mention", label: "Упоминания", desc: "Только когда вас упоминают", enabled: false },
+  ]);
 
-  const toggle = (id: string) => {
-    setPrivacyOptions((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, enabled: !o.enabled } : o))
-    );
+  const togglePrivacy = (id: string) => {
+    setPrivacyOptions((prev) => prev.map((o) => (o.id === id ? { ...o, enabled: !o.enabled } : o)));
+  };
+
+  const toggleNotif = (id: string) => {
+    setNotifOptions((prev) => prev.map((o) => (o.id === id ? { ...o, enabled: !o.enabled } : o)));
   };
 
   return (
@@ -209,17 +310,11 @@ export function SettingsPage() {
                 <div className="text-xs text-muted-foreground mt-0.5">{option.desc}</div>
               </div>
               <button
-                onClick={() => toggle(option.id)}
-                className={`relative w-11 h-6 rounded-full transition-all flex-shrink-0 ${
-                  option.enabled ? "bg-neon-green" : "bg-muted"
-                }`}
+                onClick={() => togglePrivacy(option.id)}
+                className={`relative w-11 h-6 rounded-full transition-all flex-shrink-0 ${option.enabled ? "bg-neon-green" : "bg-muted"}`}
                 style={option.enabled ? { boxShadow: "0 0 10px hsl(168 100% 50% / 0.5)" } : {}}
               >
-                <div
-                  className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${
-                    option.enabled ? "left-[22px]" : "left-0.5"
-                  }`}
-                />
+                <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${option.enabled ? "left-[22px]" : "left-0.5"}`} />
               </button>
             </div>
           ))}
@@ -232,22 +327,19 @@ export function SettingsPage() {
           Уведомления
         </h2>
         <div className="glass rounded-xl border border-border divide-y divide-border">
-          {[
-            { label: "Звук сообщений", desc: "Воспроизводить звук при получении" },
-            { label: "Push-уведомления", desc: "Уведомления в браузере" },
-            { label: "Упоминания", desc: "Только когда вас упоминают" },
-          ].map((item) => (
-            <div key={item.label} className="flex items-center justify-between px-5 py-4">
+          {notifOptions.map((item) => (
+            <div key={item.id} className="flex items-center justify-between px-5 py-4">
               <div>
                 <div className="font-semibold text-sm">{item.label}</div>
                 <div className="text-xs text-muted-foreground mt-0.5">{item.desc}</div>
               </div>
-              <div
-                className="relative w-11 h-6 rounded-full bg-neon-green cursor-pointer flex-shrink-0"
-                style={{ boxShadow: "0 0 10px hsl(168 100% 50% / 0.5)" }}
+              <button
+                onClick={() => toggleNotif(item.id)}
+                className={`relative w-11 h-6 rounded-full transition-all flex-shrink-0 ${item.enabled ? "bg-neon-green" : "bg-muted"}`}
+                style={item.enabled ? { boxShadow: "0 0 10px hsl(168 100% 50% / 0.5)" } : {}}
               >
-                <div className="absolute top-0.5 left-[22px] w-5 h-5 rounded-full bg-white" />
-              </div>
+                <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${item.enabled ? "left-[22px]" : "left-0.5"}`} />
+              </button>
             </div>
           ))}
         </div>
@@ -256,22 +348,81 @@ export function SettingsPage() {
   );
 }
 
-export function HelpPage() {
+export function HelpPage({ navigate }: { navigate: (p: Page) => void }) {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [supportSent, setSupportSent] = useState(false);
+  const [supportText, setSupportText] = useState("");
+  const [showSupport, setShowSupport] = useState(false);
 
   return (
     <div className="space-y-6 animate-fade-in max-w-xl">
+      {showSupport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-sm mx-4 glass rounded-2xl border border-border p-6"
+               style={{ boxShadow: "0 0 40px hsl(168 100% 50% / 0.1)" }}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-black">Написать в поддержку</h2>
+              <button onClick={() => { setShowSupport(false); setSupportSent(false); setSupportText(""); }}
+                className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
+                <Icon name="X" size={16} className="text-muted-foreground" />
+              </button>
+            </div>
+            {supportSent ? (
+              <div className="text-center py-6">
+                <div className="w-12 h-12 rounded-full bg-neon-green/10 flex items-center justify-center mx-auto mb-3">
+                  <Icon name="CheckCircle" size={24} className="text-neon-green" />
+                </div>
+                <p className="font-bold">Сообщение отправлено!</p>
+                <p className="text-sm text-muted-foreground mt-1">Мы ответим в течение 24 часов</p>
+                <button
+                  onClick={() => { setShowSupport(false); setSupportSent(false); setSupportText(""); }}
+                  className="mt-4 bg-neon-green text-background font-bold text-sm px-5 py-2 rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  Закрыть
+                </button>
+              </div>
+            ) : (
+              <>
+                <textarea
+                  autoFocus
+                  placeholder="Опишите вашу проблему или вопрос..."
+                  value={supportText}
+                  onChange={(e) => setSupportText(e.target.value)}
+                  rows={4}
+                  className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-neon-green/50 transition-colors resize-none mb-4 placeholder:text-muted-foreground"
+                />
+                <div className="flex gap-2">
+                  <button onClick={() => setShowSupport(false)}
+                    className="flex-1 border border-border text-sm py-2.5 rounded-lg hover:border-neon-green/30 transition-colors">
+                    Отмена
+                  </button>
+                  <button
+                    onClick={() => setSupportSent(true)}
+                    disabled={!supportText.trim()}
+                    className="flex-1 bg-neon-green text-background font-bold text-sm py-2.5 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <Icon name="Send" size={14} />
+                    Отправить
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       <h1 className="text-2xl font-black">Справка</h1>
 
       <div className="grid grid-cols-2 gap-3">
         {[
-          { label: "Начало работы", icon: "BookOpen", color: "hsl(168 100% 50%)" },
-          { label: "Безопасность", icon: "Shield", color: "hsl(270 80% 65%)" },
-          { label: "Приватность", icon: "Lock", color: "hsl(210 100% 60%)" },
-          { label: "Поддержка", icon: "Headphones", color: "hsl(45 100% 55%)" },
+          { label: "Начать общение", icon: "MessageSquare", color: "hsl(168 100% 50%)", page: "chats" as Page },
+          { label: "Серверы", icon: "Server", color: "hsl(270 80% 65%)", page: "servers" as Page },
+          { label: "Приватность", icon: "Lock", color: "hsl(210 100% 60%)", page: "settings" as Page },
+          { label: "Профиль", icon: "User", color: "hsl(45 100% 55%)", page: "profile" as Page },
         ].map((item, i) => (
           <button
             key={item.label}
+            onClick={() => navigate(item.page)}
             className="glass rounded-xl border border-border p-4 flex items-center gap-3 hover:scale-105 transition-all text-left animate-fade-in"
             style={{ animationDelay: `${i * 0.07}s`, opacity: 0 }}
           >
@@ -320,7 +471,10 @@ export function HelpPage() {
         <p className="text-sm text-muted-foreground mb-4">
           Наша команда поддержки отвечает в течение 24 часов.
         </p>
-        <button className="flex items-center gap-2 bg-neon-green text-background font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-all text-sm hover:scale-105">
+        <button
+          onClick={() => setShowSupport(true)}
+          className="flex items-center gap-2 bg-neon-green text-background font-bold px-4 py-2 rounded-lg hover:opacity-90 transition-all text-sm hover:scale-105"
+        >
           <Icon name="Send" size={14} />
           Написать в поддержку
         </button>

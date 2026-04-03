@@ -19,14 +19,16 @@ export default function Index() {
   const [activePage, setActivePage] = useState<Page>("home");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  const navigate = (page: Page) => setActivePage(page);
+
   const renderPage = () => {
     switch (activePage) {
-      case "home": return <HomePage />;
-      case "servers": return <ServersPage />;
-      case "chats": return <ChatsPage />;
-      case "profile": return <ProfilePage />;
+      case "home":     return <HomePage navigate={navigate} />;
+      case "servers":  return <ServersPage />;
+      case "chats":    return <ChatsPage />;
+      case "profile":  return <ProfilePage />;
       case "settings": return <SettingsPage />;
-      case "help": return <HelpPage />;
+      case "help":     return <HelpPage navigate={navigate} />;
     }
   };
 
@@ -61,7 +63,7 @@ export default function Index() {
             {NAV_ITEMS.map((item, i) => (
               <button
                 key={item.id}
-                onClick={() => setActivePage(item.id)}
+                onClick={() => navigate(item.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all animate-slide-in-left ${
                   activePage === item.id
                     ? "bg-neon-green/10 text-neon-green border border-neon-green/30"
@@ -83,7 +85,10 @@ export default function Index() {
           </nav>
 
           <div className="px-3 py-4 border-t border-border">
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors">
+            <button
+              onClick={() => navigate("profile")}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors"
+            >
               <div className="relative">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-neon-green/40 to-accent/40 flex items-center justify-center font-bold text-xs">
                   АИ
@@ -94,7 +99,7 @@ export default function Index() {
                 <div className="text-sm font-semibold truncate">Александр И.</div>
                 <div className="font-mono text-xs text-muted-foreground">#2847</div>
               </div>
-              <Icon name="MoreVertical" size={14} className="text-muted-foreground" />
+              <Icon name="ChevronRight" size={14} className="text-muted-foreground" />
             </button>
           </div>
         </div>
